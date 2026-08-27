@@ -24,7 +24,7 @@ import discord
 from discord.ext import commands
 
 from src.commands import Cog
-from src.env import COLOUR, SCHEDULER_DATABASE_PATH, DEBUG_MODE, DEFAULT_TIMEZONE, TIME_LANG
+from src.env import COLOUR, SCHEDULER_DATABASE_PATH, DEBUG_MODE, DEFAULT_TIMEZONE, TIME_LANG, ALLOWED_ROLE_IDS
 
 if TYPE_CHECKING:
     from src.bot import Bot
@@ -1171,6 +1171,20 @@ class Scheduler(Cog):
         logger.debug("Closing DB connection.")
         await self.db.close()
 
+    async def cog_command_error(
+        self,
+        ctx: commands.Context[Bot],
+        error: commands.CommandError,
+    ) -> None:
+        if isinstance(error, commands.MissingAnyRole):
+            await ctx.reply(
+                "You don't have permission to use this command.",
+                ephemeral=True,
+            )
+            return
+
+        raise error
+
     async def _update_to_version_0(self) -> None:
         """
         Update DB to version 0.
@@ -1953,6 +1967,7 @@ class Scheduler(Cog):
 
     @commands.guild_only()
     @commands.hybrid_group(ignore_extra=False)
+    @commands.has_any_role(*ALLOWED_ROLE_IDS)
     async def schedule(
         self,
         ctx: commands.Context[Bot],
@@ -1969,6 +1984,7 @@ class Scheduler(Cog):
     @commands.guild_only()
     @schedule.command(name="create", ignore_extra=False, hidden=True)
     @discord.app_commands.describe(channel="The channel for the scheduled message.")
+    @commands.has_any_role(*ALLOWED_ROLE_IDS)
     async def schedule_create(
         self,
         ctx: commands.Context[Bot],
@@ -1985,6 +2001,7 @@ class Scheduler(Cog):
     @commands.guild_only()
     @schedule.command(name="list", ignore_extra=False)
     @discord.app_commands.describe(channel="The channel to list scheduled messages.")
+    @commands.has_any_role(*ALLOWED_ROLE_IDS)
     async def schedule_list(
         self,
         ctx: commands.Context[Bot],
@@ -2001,6 +2018,7 @@ class Scheduler(Cog):
     @commands.guild_only()
     @schedule.command(name="show", aliases=["view"])
     @discord.app_commands.describe(event_id="The event ID of the scheduled message (see `/list`).")
+    @commands.has_any_role(*ALLOWED_ROLE_IDS)
     async def schedule_show(self, ctx: commands.Context[Bot], event_id: int) -> None:
         """Show related info of a scheduled message event.
         `event_id` - The event ID of the scheduled message (see `/list`).
@@ -2047,6 +2065,7 @@ class Scheduler(Cog):
         event_id="The event ID of the scheduled message (see `/list`).",
         new_channel="The new channel for the message event.",
     )
+    @commands.has_any_role(*ALLOWED_ROLE_IDS)
     async def schedule_edit(
         self,
         ctx: commands.Context[Bot],
@@ -2155,6 +2174,7 @@ class Scheduler(Cog):
     @commands.guild_only()
     @schedule.command(name="delete", aliases=["remove", "unschedule"])
     @discord.app_commands.describe(event_id="The event ID of the scheduled message (see `/list`).")
+    @commands.has_any_role(*ALLOWED_ROLE_IDS)
     async def schedule_delete(self, ctx: commands.Context[Bot], event_id: int) -> None:
         """Delete a previously scheduled message event.
         `event_id` - The event ID of the scheduled message (see `/list`).

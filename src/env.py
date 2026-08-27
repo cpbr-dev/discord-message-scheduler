@@ -27,6 +27,7 @@ __all__ = [
     "SYNC_SLASH_COMMANDS",
     "DEFAULT_TIMEZONE",
     "TIME_LANG",
+    "ALLOWED_ROLE_IDS",
 ]
 
 logger = logging.getLogger(__name__)
@@ -129,3 +130,8 @@ except ModuleNotFoundError:
 
 
 TIME_LANG = ["en"]
+
+ALLOWED_ROLE_IDS = tuple(
+    int(role_id.strip())
+    for role_id in os.environ["ALLOWED_ROLE_IDS"].split(",")
+)
